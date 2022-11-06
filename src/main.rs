@@ -12,20 +12,17 @@
 
 use nqueen::{Board, Point};
 
-/// The estimated distance to the anwser (greater = further).
-fn heuristic(board: &Board) -> usize {
-    board.check_data().iter().map(|i| i.len()).sum::<usize>() / 2
-}
-
 /// Move a piece the most checked only if the heuristic shows a lower value.
 ///
 /// Breaks after fixed number of attempts.
+///
+/// The checks/threats count is the heuristic function in this implementation.
 fn lower_heuristic(board: &mut Board) -> Result<(usize, usize, Point, Point), &'static str> {
     const MAX_ATTEMPTS: usize = 1000000;
     for _ in 0..MAX_ATTEMPTS {
-        let pre_h = heuristic(board);
+        let pre_h = board.checks_count();
         let (from, to) = board.move_most_checked();
-        let post_h = heuristic(board);
+        let post_h = board.checks_count();
         if pre_h < post_h {
             board.mov(&to, &from).unwrap();
         } else {
@@ -49,7 +46,7 @@ fn main() {
 
     let mut board = Board::new(n);
     let max_h = board.max_checks();
-    println!("Initial heuristic: {}/{}", heuristic(&board), max_h);
+    println!("Initial heuristic: {}/{}", board.checks_count(), max_h);
 
     const MAX_MOVES: usize = 100000;
     println!("Not printing random moves without a heustiric change");

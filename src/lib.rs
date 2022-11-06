@@ -226,6 +226,13 @@ impl Board {
     pub fn index_of(&self, point: &Point) -> Option<usize> {
         self.queens.iter().position(|p| *p == *point)
     }
+
+    /// The sum of all the checks and threats that queens make.
+    ///
+    /// This can be a good heuristic function to estimate the distance to the ideal solution.
+    pub fn checks_count(&self) -> usize {
+        self.check_data().iter().map(|i| i.len()).sum::<usize>() / 2
+    }
 }
 
 impl Display for Board {
