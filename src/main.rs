@@ -45,8 +45,12 @@ fn main() {
     }
 
     let mut board = Board::new(n).init_n_queens().unwrap();
-    let max_h = board.max_checks();
-    println!("Initial heuristic: {}/{}", board.checks_count(), max_h);
+
+    println!(
+        "Initial heuristic: {}/{}",
+        board.checks_count(),
+        board.max_checks()
+    );
 
     const MAX_MOVES: usize = 100000;
     println!("Not printing random moves without a heustiric change");
@@ -64,9 +68,7 @@ fn main() {
             let pre = pre_move.split("\n").collect::<Vec<&str>>();
             let post = post_move.split("\n").collect::<Vec<&str>>();
 
-            for i in 0..(pre.len() - 1)
-            /* last line is empty */
-            {
+            for i in 0..(pre.len() - 1/* last line is empty */) {
                 println!("{}  -->  {}", pre[i], post[i]);
             }
             println!("\n{}\n", "#".repeat(79));
