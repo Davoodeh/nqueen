@@ -8,7 +8,7 @@ use std::fmt::Display;
 const ALREADY_FILLED_POINT_ERROR: &str = "The point is already taken.";
 
 /// A point on a chess board.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Point {
     pub row: usize,
     pub col: usize,
