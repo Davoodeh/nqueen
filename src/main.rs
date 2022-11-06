@@ -44,7 +44,7 @@ fn main() {
         panic!("Given number must be bigger than 4");
     }
 
-    let mut board = Board::new(n);
+    let mut board = Board::new(n).init_n_queens().unwrap();
     let max_h = board.max_checks();
     println!("Initial heuristic: {}/{}", board.checks_count(), max_h);
 

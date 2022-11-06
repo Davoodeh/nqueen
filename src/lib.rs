@@ -66,28 +66,38 @@ pub struct Board {
 
 impl Board {
     pub fn new(n: usize) -> Self {
-        let mut candidate = Self {
+        Self {
             queens: vec![],
             n,
             check_data: vec![],
             max_checks: 0,
-        };
+        }
+    }
 
-        // place N queens randomly on the board.
+    /// Place some number of `queens` randomly on the board.
+    // TODO Optimize the large loop.
+    pub fn init_queens(mut self, queens: usize) -> Result<Self, &'static str> {
         let mut placed_queens = 0;
-        while placed_queens != n {
-            if candidate.place(&Point::random(n)).is_ok() {
+        const MAX_TRIES: usize = 100000;
+        for _ in 0..MAX_TRIES {
+            if placed_queens == queens {
+                println!("Queens: {}", self.queens_display());
+                println!("{}", self);
+                return Ok(self);
+            }
+            if self.place(&Point::random(self.n)).is_ok() {
                 placed_queens += 1;
             }
         }
 
-        println!("Created the board");
-        println!("Queens: {}", candidate.queens_display());
-        println!("{}", candidate);
-
-        candidate
+        Err("Could not place more queens on the board (is it filled?)")
     }
 
+    /// Place N queens on the board randomly.
+    pub fn init_n_queens(self) -> Result<Self, &'static str> {
+        let n = self.n;
+        self.init_queens(n)
+    }
 
     /// A getter for the check data.
     pub fn check_data(&self) -> &Vec<Vec<Point>> {
