@@ -99,6 +99,11 @@ impl Board {
         self.init_queens(n)
     }
 
+    /// A getter for the queens data.
+    pub fn queens(&self) -> &Vec<Point> {
+        &self.queens
+    }
+
     /// A getter for the check data.
     pub fn check_data(&self) -> &Vec<Vec<Point>> {
         &self.check_data
