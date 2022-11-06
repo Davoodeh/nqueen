@@ -88,20 +88,6 @@ impl Board {
         candidate
     }
 
-    pub fn queens_display(&self) -> String {
-        let mut s = String::new();
-        const SEP: &str = ", ";
-        let n = self.queens.len();
-        s += "[";
-        for i in 0..n {
-            s += &self.queens[i].to_string();
-            if i != (n - 1) {
-                s += SEP;
-            }
-        }
-        s += "]";
-        s
-    }
 
     /// A getter for the check data.
     pub fn check_data(&self) -> &Vec<Vec<Point>> {
@@ -232,6 +218,21 @@ impl Board {
     /// This can be a good heuristic function to estimate the distance to the ideal solution.
     pub fn checks_count(&self) -> usize {
         self.check_data().iter().map(|i| i.len()).sum::<usize>() / 2
+    }
+
+    pub fn queens_display(&self) -> String {
+        let mut s = String::new();
+        const SEP: &str = ", ";
+        let n = self.queens.len();
+        s += "[";
+        for i in 0..n {
+            s += &self.queens[i].to_string();
+            if i != (n - 1) {
+                s += SEP;
+            }
+        }
+        s += "]";
+        s
     }
 }
 
