@@ -8,3 +8,4 @@ authors = ["M. Yas. Davoodeh <MYDavoodeh@gmail.com>"]
 
 [dependencies]
 rand = "0.8.5"
+clap = { version = "4", features = ["derive"] }

@@ -2,47 +2,100 @@
 //!
 //! See `Mode` enum for the various algorithms implmemented.
 
+#[macro_use]
+extern crate clap;
+
+use clap::{arg, command, value_parser, Parser};
 use rand::prelude::*;
 
 use nqueen::{Board, Point};
+
+#[derive(Parser, Debug)]
+#[command(about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    mode: ModeCommands,
+}
 
 /// The possible modes/algorithms of the program.
 ///
 /// NOTE I'm well aware that one should not write everything in a single function. But I saw fit to
 /// implement ONE and ONLY ONE `*-solution` method for each variant. This is a deliberate choice.
-enum Mode {
-    /// See `random_solution` for more details.
-    Random,
-    /// See `genetic_solution` for more details.
-    Genetic,
+#[derive(Subcommand, Debug)]
+enum ModeCommands {
+    /// Use a random placement (heuristic based) algorithm
+    Random {
+        /// The size of the board and number of queens
+        #[arg(value_parser = clap::value_parser!(u16).range(4..))]
+        n: u16,
+    },
+    /// Use genetic algorithm
+    Genetic {
+        /// The size of the board and number of queens
+        #[arg(value_parser = clap::value_parser!(u16).range(4..))]
+        n: u16,
+        /// The initial population of the boards
+        #[arg(short, long, value_name = "POPULATION", default_value_t = 30)]
+        population: usize,
+        /// The number of parents that combine into a single child
+        #[arg(short = 'r', long, value_name = "PARENTS", default_value_t = 2)]
+        parents: usize,
+        /// The maximum number of suvivors moved to the next generation
+        #[arg(short, long, value_name = "SURVIVORS", default_value_t = 6)]
+        survivors: usize,
+        /// The mutation percentage for each single gene
+        #[arg(short, long, value_name = "SURVIVORS", default_value_t = 5)]
+        mutation_chance: usize,
+        /// The number of moves in each generation
+        #[arg(
+            short = 'd',
+            long,
+            value_name = "MOVES_IN_GENERATION",
+            default_value_t = 3
+        )]
+        moves_in_generation: usize,
+        /// The maximum number of generations
+        #[arg(short, long, value_name = "GENERATIONS", default_value_t = 1000)]
+        generations: usize,
+    },
 }
 
-impl Mode {
+impl ModeCommands {
     /// Solve the selected mode.
-    pub fn solve(&self, n: usize) {
+    pub fn solve(&self) {
         match self {
-            Self::Random => Self::random_solution(n),
-            Self::Genetic => Self::genetic_solution(n),
+            Self::Random { .. } => self.random_solution(),
+            Self::Genetic { .. } => self.genetic_solution(),
         }
     }
 
     /// Solve the problem using the genetics algorithm.
-    pub fn genetic_solution(n: usize) {
-        const POPULATION: usize = 30;
-        /// How many will make it to the next generation. NOTE LOWER THAN POPULATION
-        const SURVIVORS: usize = 6;
-        /// How many get combined to for the next child.
-        const PARENTS: usize = 2;
-        /// The mutation chance (out of 100).
-        const MUTATION_CHANCE: usize = 10;
-        /// Number of moves in each generation.
-        const MOVES_IN_GENERATION: usize = 3;
-        /// Number of maximum generations.
-        const GENERATIONS: usize = 1000;
-        // Read more: aggressive genes, stable marraige/shuffling parents, twin/triplet/etc chance.
+    fn genetic_solution(&self) {
+        // TODO update to let-else when the new Rust is out
+        let (n, population, parents, survivors, mutation_chance, generations, moves_in_generation) =
+            match *self {
+                Self::Genetic {
+                    population,
+                    parents,
+                    survivors,
+                    mutation_chance,
+                    generations,
+                    moves_in_generation,
+                    ..
+                } => (
+                    self.n(),
+                    population,
+                    parents,
+                    survivors,
+                    mutation_chance,
+                    generations,
+                    moves_in_generation,
+                ),
+                _ => unreachable!("Invalid variant called the genetic solution"),
+            };
 
         assert!(
-            PARENTS < n,
+            parents < n,
             "The chess board size is smaller than the number of parents.\
              To keep the code simple, this is not supported."
         );
@@ -50,7 +103,7 @@ impl Mode {
         let mut rng = thread_rng();
 
         // Holds the boards.
-        let mut env = vec![Board::new(n); POPULATION]
+        let mut env = vec![Board::new(n); population]
             .into_iter()
             .map(|i| i.init_n_queens().unwrap())
             .collect::<Vec<Board>>();
@@ -61,22 +114,22 @@ impl Mode {
 
         println!(
             "Environment details:\n\
-             - initial population: {POPULATION}\n\
-             - each generation's max survivors: {SURVIVORS}\n\
-             - number of parents required for a child: {PARENTS}\n\
-             - mutation chance: {MUTATION_CHANCE}%\n\
-             - moves before a generation dies out: {MOVES_IN_GENERATION}\n\
-             - maximum generations: {GENERATIONS}\n\
+             - initial population: {population}\n\
+             - each generation's max survivors: {survivors}\n\
+             - number of parents required for a child: {parents}\n\
+             - mutation chance: {mutation_chance}%\n\
+             - moves before a generation dies out: {moves_in_generation}\n\
+             - maximum generations: {generations}\n\
             "
         );
 
-        'time: for generation in 0..GENERATIONS {
+        'time: for generation in 0..generations {
             println!("Generation #{}", generation);
             println!("This generation's heuristics: {:?}", all_heuristics(&env));
 
             // Let them live their lives
             for board in env.iter_mut() {
-                for _ in 0..MOVES_IN_GENERATION {
+                for _ in 0..moves_in_generation {
                     let _ = Self::lower_heuristic(board);
                 }
             }
@@ -85,57 +138,57 @@ impl Mode {
             env.sort_by(|a, b| a.checks_count().cmp(&b.checks_count()));
             println!(
                 "This generation's heuristics after {} moves: {:?}",
-                MOVES_IN_GENERATION,
+                moves_in_generation,
                 all_heuristics(&env)
             );
 
             // Pick this generation of survivors and check for the fittest or continue.
-            if env.len() < SURVIVORS {
+            if env.len() < survivors {
                 panic!("Everybody died!");
             }
-            let survivors = &env[0..SURVIVORS].to_vec();
-            let survivors_heuristics = all_heuristics(&survivors);
+            let survivors_vec = &env[0..survivors].to_vec();
+            let survivors_heuristics = all_heuristics(&survivors_vec);
             println!(
                 "The {} survivors of this generation are: {:?}",
-                SURVIVORS, survivors_heuristics,
+                survivors, survivors_heuristics,
             );
             if survivors_heuristics[0] == 0 {
                 println!("The fittest was found!");
-                println!("{}", survivors[0]);
+                println!("{}", survivors_vec[0]);
                 break 'time;
             }
 
             env = vec![];
             // Make children from the survivors
-            'child_production: for _parents in 0..(POPULATION / PARENTS) {
+            'child_production: for _parents in 0..(population / parents) {
                 // println!("Managing the couple #{}", _parents);
                 // Choose some parents to make a child from them
-                let mut parents = Vec::<Board>::with_capacity(PARENTS);
-                for _ in 0..PARENTS {
+                let mut parents_vec = Vec::<Board>::with_capacity(parents);
+                for _ in 0..parents {
                     // NOTE Since this is not important, we leave the chance for a board to have
                     // children from itself.
-                    let randomly_picked_parent = survivors[rng.gen_range(0..SURVIVORS)].clone();
-                    parents.push(randomly_picked_parent);
+                    let randomly_picked_parent = survivors_vec[rng.gen_range(0..survivors)].clone();
+                    parents_vec.push(randomly_picked_parent);
                 }
 
                 // Create the child from their stats and distribute the information/genes equally.
                 // In this example implementation, the gene split rate is uniform meaning all
                 // parents pass equal amount of genes to their children.
                 let mut child_genes = Vec::<Point>::with_capacity(n);
-                let gene_portions = n / PARENTS; // number of genes from each parent
-                let last_parent_extra_passing = n % PARENTS; // leftover genes for the last parent
-                for i in 0..PARENTS {
+                let gene_portions = n / parents; // number of genes from each parent
+                let last_parent_extra_passing = n % parents; // leftover genes for the last parent
+                for i in 0..parents {
                     // println!("Subject parent #{}: {}", i, parents[i].queens_display());
                     let mut extra_genes = 0;
                     // As for the last parent, give all the remaining genes to the child (may be
                     // more than others).
-                    if i == PARENTS - 1 {
+                    if i == parents - 1 {
                         extra_genes = last_parent_extra_passing;
                     }
                     for j in 0..(gene_portions + extra_genes) {
                         // Pick the first n/PARENTS genes from the first parent then the next till
                         // one is left
-                        let gene = parents[i].queens()[(i * gene_portions) + j].clone();
+                        let gene = parents_vec[i].queens()[(i * gene_portions) + j].clone();
                         // println!("Inheriting {} from parent #{}", gene, i);
                         child_genes.push(gene);
                     }
@@ -149,14 +202,14 @@ impl Mode {
                     let mutated_coord = rng.gen_range(0..n);
                     // println!(
                     //     "Mutation: {}>={} ; Mutated Coord: {}",
-                    //     MUTATION_CHANCE,
+                    //     mutation_chance,
                     //     chance,
                     //     (mutated_coord + 1) // Point is +1 in its diplay
                     // );
-                    if chance < (MUTATION_CHANCE / 2) {
+                    if chance < (mutation_chance / 2) {
                         // 50% to mutate the row
                         i.row = mutated_coord;
-                    } else if chance < MUTATION_CHANCE {
+                    } else if chance < mutation_chance {
                         // 50% to mutate the col
                         i.col = mutated_coord;
                     }
@@ -189,7 +242,9 @@ impl Mode {
     ///
     /// This is a homework example of a "heuristic function implementation" not an attempt to solve
     /// the N-Queens.
-    pub fn random_solution(n: usize) {
+    pub fn random_solution(&self) {
+        let n = self.n();
+
         let mut board = Board::new(n).init_n_queens().unwrap();
 
         println!(
@@ -246,31 +301,16 @@ impl Mode {
         }
         Err("Got stuck in a local minima")
     }
+
+    fn n(&self) -> usize {
+        match self {
+            Self::Genetic { n, .. } => *n as usize,
+            Self::Random { n, .. } => *n as usize,
+        }
+    }
 }
 
 fn main() {
-    const INVALID_MODE_ERROR: &str = "Expected 'random' or 'genetic' as the mode";
-    let mode = match std::env::args()
-        .nth(1)
-        .expect(INVALID_MODE_ERROR)
-        .to_lowercase()
-        .as_str()
-    {
-        "random" => Mode::Random,
-        "genetic" => Mode::Genetic,
-        _ => panic!("Invalid mode. {}", INVALID_MODE_ERROR),
-    };
-
-    let n = std::env::args()
-        .nth(2)
-        .expect("Expected an input as the number of Queens (N)")
-        .to_owned()
-        .parse::<usize>()
-        .expect("Invalid number as the input.");
-
-    if n < 4 {
-        panic!("Given number must be bigger than 4");
-    }
-
-    mode.solve(n)
+    let cli = Cli::parse().mode;
+    cli.solve();
 }
