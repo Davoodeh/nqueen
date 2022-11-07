@@ -54,7 +54,7 @@ impl Mode {
             .into_iter()
             .map(|i| i.init_n_queens().unwrap())
             .collect::<Vec<Board>>();
-        /// Create the primitive/initial boards, the natives of the env.
+        // Create the primitive/initial boards, the natives of the env.
         // Print all the heuristics of the boards in the env
         let all_heuristics =
             |env: &Vec<Board>| env.iter().map(|i| i.checks_count()).collect::<Vec<usize>>();
@@ -77,7 +77,7 @@ impl Mode {
             // Let them live their lives
             for board in env.iter_mut() {
                 for _ in 0..MOVES_IN_GENERATION {
-                    Self::lower_heuristic(board);
+                    let _ = Self::lower_heuristic(board);
                 }
             }
 
@@ -107,11 +107,11 @@ impl Mode {
 
             env = vec![];
             // Make children from the survivors
-            'child_production: for i in 0..(POPULATION / PARENTS) {
-                // println!("Managing the couple #{}", i);
+            'child_production: for _parents in 0..(POPULATION / PARENTS) {
+                // println!("Managing the couple #{}", _parents);
                 // Choose some parents to make a child from them
                 let mut parents = Vec::<Board>::with_capacity(PARENTS);
-                for i in 0..PARENTS {
+                for _ in 0..PARENTS {
                     // NOTE Since this is not important, we leave the chance for a board to have
                     // children from itself.
                     let randomly_picked_parent = survivors[rng.gen_range(0..SURVIVORS)].clone();
@@ -145,7 +145,6 @@ impl Mode {
                 // If two pieces collide, mark the board as invalid/cancerous/high-cost (removes it
                 // from the next generation).
                 for i in child_genes.iter_mut() {
-                    let pre = i.clone();
                     let chance = rng.gen_range(0..100);
                     let mutated_coord = rng.gen_range(0..n);
                     // println!(
@@ -250,7 +249,7 @@ impl Mode {
 }
 
 fn main() {
-    const INVALID_MODE_ERROR: &str = "Expected 'random' as the mode";
+    const INVALID_MODE_ERROR: &str = "Expected 'random' or 'genetic' as the mode";
     let mode = match std::env::args()
         .nth(1)
         .expect(INVALID_MODE_ERROR)
