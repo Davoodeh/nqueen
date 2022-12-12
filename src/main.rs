@@ -5,7 +5,7 @@
 #[macro_use]
 extern crate clap;
 
-use clap::{arg, command, value_parser, Parser};
+use clap::{arg, command, Parser};
 use rand::prelude::*;
 
 use nqueen::{Board, Point};
