@@ -1,0 +1,19 @@
+#+TITLE: N-Queens: Solved by Random Greedy Heuristic and Genetic N-Queen Solver
+#+AUTHOR: M. Yas. Davoodeh
+
+This is a demonstration for a couple of university courses which I took (some
+ML/AI).
+
+There is little to no explanation about how Rust works. This repo is not
+intended for that.
+
+The code is quite messy with a lot of verbose printings, maximum indentation and
+single functions which do multiple actions. This is written in like 8 hours
+total and was intended to be as simple as possible so I just wrote the whole
+algorithm as a single procedure in both modes. Not that I like it this way, I
+just don't care to put more effort into it.
+
+To see a cleaner documentation about the code run ~cargo doc~ and to run it, run
+~cargo run -- ARGS~.
+
+Example outputs of both modes are in ~*-example.txt~ files.

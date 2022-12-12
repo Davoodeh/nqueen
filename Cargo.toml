@@ -3,6 +3,7 @@ name = "nqueen"
 version = "0.1.0"
 edition = "2021"
 authors = ["M. Yas. Davoodeh <MYDavoodeh@gmail.com>"]
+rust-version = "1.64"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
